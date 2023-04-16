@@ -16,9 +16,11 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -52,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                makeRequest();
+                getAllFruits();
             }
         });
 
@@ -243,6 +245,62 @@ public class MainActivity extends AppCompatActivity {
                                     adapter.notifyDataSetChanged();
 
                                 } catch (JSONException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+                        }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("stock", error.getMessage());
+                    }
+                });
+
+        // due to long response time, we need to add a long delay time
+        stringRequest.setRetryPolicy(new DefaultRetryPolicy(
+                50000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest);
+    }
+
+    private void getAllFruits() {
+        // Instantiate the RequestQueue.
+        RequestQueue queue = Volley.newRequestQueue(this);
+        fruitET = findViewById(R.id.fruit_id);
+
+        FRUIT_SYMBOL = fruitET.getText().toString();
+        String url =
+                "https://64107e277b24bb91f21efea4.mockapi.io/fruits";
+
+        JsonArrayRequest stringRequest =
+                new JsonArrayRequest(Request.Method.GET, url, null,
+                        new Response.Listener<JSONArray>() {
+                            @Override
+                            public void onResponse(JSONArray response) {
+                                try {
+                                    Log.i("length",
+                                            Integer.toString(response.length()));
+
+                                    for (int i = 0; i < response.length(); ++i) {
+                                        JSONObject fruit =
+                                                response.getJSONObject(i);
+
+                                        String name = fruit.getString("name");
+                                        String family = fruit.getString("family");
+                                        JSONObject nutritionObj = fruit.getJSONObject("nutritions");
+                                        int calories = nutritionObj.getInt("calories");
+                                        int sugar = nutritionObj.getInt("sugar");
+                                        int carbohydrates = nutritionObj.getInt("carbohydrates");
+
+                                        //add fruit with details
+                                        data.add(new FruitItem(name, family, calories, sugar, carbohydrates));
+                                    }
+
+                                    adapter.notifyDataSetChanged();
+
+                                } catch (Exception e) {
                                     throw new RuntimeException(e);
                                 }
                             }
