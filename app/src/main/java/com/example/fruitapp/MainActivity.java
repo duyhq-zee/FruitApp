@@ -33,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
     String FRUIT_SYMBOL;
     Button btn;
     Button addBtn;
+    Button deleteBtn;
+    Button updateBtn;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -63,11 +65,108 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+        deleteBtn = findViewById(R.id.delete_btn);
+
+        deleteBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                deleteFruit("1");
+            }
+        });
+
+        updateBtn = findViewById(R.id.update_btn);
+
+        updateBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Get old fruit...
+
+                FruitItem newFruit = new FruitItem("Apple", "a", 1, 2, 3);
+
+                updateFruit("2", newFruit);
+            }
+        });
+
+
         //set adapter to datasource
         adapter = new RecyclerAdapter(data);
         // assign the adapter to the recycler view
         recyclerView.setAdapter(adapter);
 
+    }
+
+    private void updateFruit(String id, FruitItem fruit){
+        Log.i("log", "UPDATE");
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+        String url = "https://64107e277b24bb91f21efea4.mockapi.io/fruits/" + id;
+
+        JSONObject body = new JSONObject();
+        try {
+            body.put("name", fruit.getName());
+            body.put("family", fruit.getFamily());
+
+            JSONObject nutritions = new JSONObject();
+            nutritions.put("sugar", fruit.getSugar());
+            nutritions.put("calories", fruit.getCalories());
+            nutritions.put("carbohydrates", fruit.getCarbohydrates());
+
+            body.put("nutritions", nutritions);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+        JsonObjectRequest stringRequest =
+                new JsonObjectRequest(Request.Method.PUT, url, body,
+                        new Response.Listener<JSONObject>() {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                            }
+                        }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("stock", error.getMessage());
+                    }
+                });
+
+        // due to long response time, we need to add a long delay time
+        stringRequest.setRetryPolicy(new DefaultRetryPolicy(
+                50000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest);
+    }
+
+    private void deleteFruit(String id){
+        Log.i("log", "DELETE");
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+        String url = "https://64107e277b24bb91f21efea4.mockapi.io/fruits/" + id;
+
+        JsonObjectRequest stringRequest =
+                new JsonObjectRequest(Request.Method.DELETE, url, null,
+                        new Response.Listener<JSONObject>() {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                            }
+                        }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("stock", error.getMessage());
+                    }
+                });
+
+        // due to long response time, we need to add a long delay time
+        stringRequest.setRetryPolicy(new DefaultRetryPolicy(
+                50000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest);
     }
 
     private void addFruit(FruitItem fruit){
@@ -97,22 +196,6 @@ public class MainActivity extends AppCompatActivity {
                         new Response.Listener<JSONObject>() {
                             @Override
                             public void onResponse(JSONObject response) {
-//                                try {
-//                                    String name = response.getString("name");
-//                                    String family = response.getString("family");
-//                                    JSONObject nutritionObj = response.getJSONObject("nutritions");
-//                                    int calories = nutritionObj.getInt("calories");
-//                                    int sugar = nutritionObj.getInt("sugar");
-//                                    int carbohydrates = nutritionObj.getInt("carbohydrates");
-//
-//                                    //add fruit with details
-//                                    data.add(new FruitItem(name, family, calories, sugar, carbohydrates));
-//
-//                                    adapter.notifyDataSetChanged();
-//
-//                                } catch (JSONException e) {
-//                                    throw new RuntimeException(e);
-//                                }
                             }
                         }, new Response.ErrorListener() {
                     @Override
